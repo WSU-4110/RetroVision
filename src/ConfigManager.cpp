@@ -86,3 +86,6 @@ const Channel& ConfigManager::GetChannel(int channelId) const {
     std::cout << "[ConfigManager] Channel " << channelId << " unavailable. Falling back to Channel 0." << std::endl;
     return fallbackChannel;
 }
+size_t ConfigManager::GetChannelCount() const {
+    return userChannels.size();
+}

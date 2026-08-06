@@ -6,8 +6,7 @@ echo RetroVision Native Windows Build Automation Pipeline
 echo ===================================================
 
 :: 1. Force native Windows Build Tools and CMake to take path priority
-set "PATH=C:\Program Files (x86)\Microsoft Visual Studio\18\BuildTools\Common7\IDE\Common Extensions\Microsoft\CMake\CMake\bin;C:\Program Files\CMake\bin;%SystemRoot%\system32;%SystemRoot%;%SystemRoot%\system32\Wbem;%SystemRoot%\System32\WindowsPowerShell\v1.0\"
-
+set "PATH=C:\Program Files\CMake\bin;%PATH%"
 :: 2. Track down workspace vcpkg dependency path
 if exist "%~dp0..\vcpkg\scripts\buildsystems\vcpkg.cmake" (
     set "VCPKG_ROOT=%~dp0..\vcpkg"
@@ -40,7 +39,7 @@ echo [INFO] Creating build directory...
 mkdir "%BUILD_DIR%"
 
 echo [INFO] Configuring CMake with Native Windows Toolchain...
-cmake -G "Visual Studio 18 2026" -A x64 ^
+cmake -G "Visual Studio 17 2022" -A x64 ^
  -S "%~dp0." ^
  -B "%BUILD_DIR%" ^
  -DCMAKE_BUILD_TYPE=Release ^
