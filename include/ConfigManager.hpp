@@ -16,6 +16,9 @@ public:
     // Functional Statement: Safe channel retrieval with automatic fallback redirection (FR-011)
     const Channel& GetChannel(int channelId) const;
 
+    // Returns the total number of configured user channels
+    size_t GetChannelCount() const;
+
 private:
     void ScanDirectoryForVideos(Channel& channel);
 };

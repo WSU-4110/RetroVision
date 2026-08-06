@@ -3,6 +3,7 @@
 #include <nlohmann/json.hpp>
 #include <iostream>
 #include <string>
+#include <utility>
 
 // Include our new configuration manager header
 #include "ConfigManager.hpp"
@@ -51,8 +52,9 @@ int main(int argc, char* argv[]) {
 
     // Initialize default active channel state
     int currentChannelIndex = 1;
-    Channel activeChannel = configManager.GetChannel(currentChannelIndex);
+    int previousChannelIndex = currentChannelIndex;
 
+    Channel activeChannel = configManager.GetChannel(currentChannelIndex);
     // 3. Initialize SDL3 Video Subsystem
     if (SDL_Init(SDL_INIT_VIDEO) < 0) {
         std::cerr << "Engine Failure: SDL could not initialize! SDL_Error: " << SDL_GetError() << std::endl;
@@ -93,6 +95,8 @@ int main(int argc, char* argv[]) {
 
     // 7. Application Polling Loop
     bool isRunning = true;
+    bool isFullscreen = false;
+
     SDL_Event event;
 
     while (isRunning) {
@@ -107,23 +111,58 @@ int main(int argc, char* argv[]) {
                 if (key == SDLK_ESCAPE) {
                     isRunning = false;
                 }
+                // --- Fullscreen Toggle ---
+                if (key == SDLK_F11) {
+                    isFullscreen = !isFullscreen;
+
+                    if (isFullscreen) {
+                        SDL_SetWindowFullscreen(window, true);
+                    }
+                    else {
+                        SDL_SetWindowFullscreen(window, false);
+                    }
+
+                    std::cout << "[Display] Fullscreen "
+                        << (isFullscreen ? "Enabled" : "Disabled")
+                        << std::endl;
+                }
 
                 // --- Sequential Surfing Logic (FR-006) ---
                 if (key == SDLK_UP) {
+                    previousChannelIndex = currentChannelIndex;
                     currentChannelIndex++;
+
+                    if (currentChannelIndex > static_cast<int>(configManager.GetChannelCount())) {
+                        currentChannelIndex = 1;
+                    }
+
                     activeChannel = configManager.GetChannel(currentChannelIndex);
                     DisplayActiveChannel(window, activeChannel);
-                } 
+                }
                 else if (key == SDLK_DOWN) {
+                    previousChannelIndex = currentChannelIndex;
                     currentChannelIndex--;
-                    if (currentChannelIndex < 0) currentChannelIndex = 0;
+
+                    if (currentChannelIndex < 1) {
+                        currentChannelIndex = static_cast<int>(configManager.GetChannelCount());
+                    }
+
                     activeChannel = configManager.GetChannel(currentChannelIndex);
                     DisplayActiveChannel(window, activeChannel);
                 }
 
                 // --- Direct Numeric Tuning Logic (FR-007) ---
                 else if (key >= SDLK_0 && key <= SDLK_9) {
-                    currentChannelIndex = key - SDLK_0; // Convert keycode to integer channel ID
+                    previousChannelIndex = currentChannelIndex;
+                    currentChannelIndex = key - SDLK_0;
+                    activeChannel = configManager.GetChannel(currentChannelIndex);
+                    DisplayActiveChannel(window, activeChannel);
+                }
+
+                // --- Previous Channel ---
+                else if (key == SDLK_b) {
+                    std::swap(currentChannelIndex, previousChannelIndex);
+
                     activeChannel = configManager.GetChannel(currentChannelIndex);
                     DisplayActiveChannel(window, activeChannel);
                 }
