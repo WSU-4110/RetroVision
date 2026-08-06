@@ -4,9 +4,23 @@
 #include <iostream>
 #include <string>
 #include <utility>
+#include <cstdlib>   // NEW: Required for rand()
+#include <ctime>     // NEW: Required for time()
 
 // Include our new configuration manager header
 #include "ConfigManager.hpp"
+
+void PrintControls() {
+    std::cout << "\n===== RetroVision Controls =====\n";
+    std::cout << "UP Arrow   - Next Channel\n";
+    std::cout << "DOWN Arrow - Previous Channel\n";
+    std::cout << "0-9        - Direct Channel\n";
+    std::cout << "B          - Previous Channel\n";
+    std::cout << "F11        - Fullscreen\n";
+    std::cout << "R          - Random Channel\n";
+    std::cout << "H          - Help\n";
+    std::cout << "ESC        - Exit\n";
+}
 
 extern "C" {
 #include <libavcodec/avcodec.h>
@@ -46,6 +60,10 @@ int main(int argc, char* argv[]) {
     // 2. Configuration & Ingestion Ingestion (FR-004, FR-005)
     // Functional Statement: Instantiate ConfigManager and load runtime configuration schema
     ConfigManager configManager;
+    std::cout << "=============================\n";
+    std::cout << "      RetroVision\n";
+    std::cout << "=============================\n";
+    std::cout << "Loading channels...\n";
     if (!configManager.LoadConfiguration("config/channels.json")) {
         std::cerr << "[Warning] Default config failed to load. Operating in standalone fallback mode." << std::endl;
     }
@@ -60,6 +78,13 @@ int main(int argc, char* argv[]) {
         std::cerr << "Engine Failure: SDL could not initialize! SDL_Error: " << SDL_GetError() << std::endl;
         return 1;
     }
+    
+
+    // NEW: Show available controls when the program starts
+    PrintControls();
+
+    // NEW: Seed the random number generator once
+    srand(static_cast<unsigned int>(time(nullptr)));
 
     // 4. Configure Hardware Core OpenGL Context (3.3 Core)
     SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 3);
@@ -92,6 +117,7 @@ int main(int argc, char* argv[]) {
 
     // Display initial startup channel on window title bar and terminal
     DisplayActiveChannel(window, activeChannel);
+    std::cout << "Now on Channel " << currentChannelIndex << std::endl;
 
     // 7. Application Polling Loop
     bool isRunning = true;
@@ -111,6 +137,11 @@ int main(int argc, char* argv[]) {
                 if (key == SDLK_ESCAPE) {
                     isRunning = false;
                 }
+
+                else if (key == SDLK_h) {
+                    PrintControls();
+                }
+
                 // --- Fullscreen Toggle ---
                 if (key == SDLK_F11) {
                     isFullscreen = !isFullscreen;
@@ -166,6 +197,22 @@ int main(int argc, char* argv[]) {
                     activeChannel = configManager.GetChannel(currentChannelIndex);
                     DisplayActiveChannel(window, activeChannel);
                 }
+                else if (key == SDLK_r) {
+
+                    previousChannelIndex = currentChannelIndex;
+
+                    currentChannelIndex =
+                        rand() % configManager.GetChannelCount() + 1;
+
+                    activeChannel =
+                        configManager.GetChannel(currentChannelIndex);
+
+                    DisplayActiveChannel(window, activeChannel);
+
+                    std::cout << "Random Channel: "
+                        << currentChannelIndex
+                        << std::endl;
+                }
             }
         }
 
@@ -175,6 +222,9 @@ int main(int argc, char* argv[]) {
 
         SDL_GL_SwapWindow(window);
     }
+
+
+   
 
     // Clean structural cleanup
     SDL_GL_DestroyContext(glContext);
